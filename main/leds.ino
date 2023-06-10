@@ -30,9 +30,9 @@ void initGame(){
 class block 
 {
   private:
-  int pos;
+  float pos;
   int len;
-  int velocity;
+  float velocity;
   CRGB color;
   public:
     bool active;
@@ -44,9 +44,9 @@ block::block()
 {
   Serial.println("new block");
   pos=NUM_LEDS;
-  color=CRGB::Red;
+  color=CHSV(random8(),255,255);
   active=true;
-  velocity=rand()%4+1;
+  velocity=(rand()%8)/8.0+0.1;
   len=rand()%4+1;
 }
 
@@ -60,8 +60,17 @@ void block::update()
   else
   {
     //draw block
+    bool first=true;
     for (int p=pos;p<NUM_LEDS && p < pos+len;p++)
-      leds[p]=color;
+    {
+      if (first)
+      {
+        first=false;
+        leds[p]+=color;
+      }
+      else
+        leds[p]+=color%64;
+    }
   }
 }
 
