@@ -3,7 +3,6 @@
 
 #include "stack.h"
 #include "block.h"
-#include "button.h"
 
 // Set our LED Pin to the GPIO Pin
 const int ledPin = 2;
@@ -123,30 +122,31 @@ void GameOverShow(int time)
   static int oldtime = 0;
   if(oldtime == 0)
     oldtime = time;
-  if(time-oldtime > 3000/50) {
+  if(time-oldtime > 3000) {
     s.reset();
+    oldtime=0;
   }
 
 }
 
+int iNextUpdate=0;
 void loop()
 {
   int time=millis();
-  if (time % 50 == 0){
-    Serial.println(s.state);
-    switch(s.state){
+  
+  if (iNextUpdate<time){
+    BlockType typeButton;
+    switch(s.state) {
       case(GameState::Running):
         update(time/50);
+        typeButton = checkTaster();
+        s.checkForAction(typeButton); 
         break;
       case(GameState::GameOver):
         GameOverShow(time);
+        break;
     }
-    else
-    {*/
-      update(time/50);
-      BlockType typeButton = checkTaster();
-      s.checkForAction(typeButton);    
-    /*}*/
-    FastLED.show();
-  }
+    iNextUpdate=time+50;
+  } 
+  FastLED.show();
 }
