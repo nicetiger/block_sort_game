@@ -5,12 +5,21 @@
 #include <list>
 #include "block.h"
 
+enum GameState
+{
+    Idel=0,
+    Running=1,
+    GameOver=2
+};
+
 class stack
 {
     public:
-        explicit stack(size_t maxSize);
+        GameState state;
+        stack(size_t maxSize, GameState state);
         void calcStep();
         void renderTo(CRGB* leds, size_t size);
+        void reset();
         size_t getBlockLengthSum() const;
         void checkForAction(BlockType typeIn);
     protected:

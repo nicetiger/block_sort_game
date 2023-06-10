@@ -16,7 +16,7 @@ const int ledPin = 2;
 // Define the array of leds
 CRGB leds[NUM_LEDS];
 
-stack s(NUM_LEDS-3);
+stack s(NUM_LEDS-3, GameState::Running); // TODO use Idle
 
 void setup()
 {
@@ -111,30 +111,35 @@ void resetGame(){
   }
 }
 
+*/
+
 void GameOverShow(int time)
 { 
+  // All Led´s Red
   for (int i=0;i<NUM_LEDS;i++) {
     leds[i]=CRGB::Red;
   }
+
   static int oldtime = 0;
   if(oldtime == 0)
     oldtime = time;
   if(time-oldtime > 3000/50) {
-    resetGame();
-    oldtime = 0;
+    s.reset();
   }
 
 }
-*/
 
 void loop()
 {
   int time=millis();
-
-  if (time % 50 == 0)
-  {/*
-    if(checkForGameOver()){
-      GameOverShow(time/50);
+  if (time % 50 == 0){
+    Serial.println(s.state);
+    switch(s.state){
+      case(GameState::Running):
+        update(time/50);
+        break;
+      case(GameState::GameOver):
+        GameOverShow(time);
     }
     else
     {*/

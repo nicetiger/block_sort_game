@@ -1,6 +1,6 @@
 #include "stack.h"
         
-stack::stack(size_t maxSize): maxSize(maxSize) {
+stack::stack(size_t maxSize, GameState state): maxSize(maxSize), state(state) {
   block *b=new block(maxSize);
   blocks.push_back(b);
 }
@@ -11,20 +11,33 @@ void stack::calcStep() {
   auto iter = blocks.begin();
   auto end  = blocks.end();
 
+  bool someBlockMovement = false;
+
   while (iter != end)
   {
-//    Serial.println(fUpperPos);
     auto b=*iter;
     float tmpPos = b->getPos() - b->getVelocity();
-
+    
     if(tmpPos > fUpperPos) {
+      // Check if Block Moved
+      if(tmpPos != b->getPos())
+        someBlockMovement = true;
       b->setPos(tmpPos);
     } else {
+      // Check if Block Moved
+      if(fUpperPos != b->getPos())
+        someBlockMovement = true;
       b->setPos(fUpperPos);
       /*TODO: Adapt velocity of this and pre block (if any)*/
     }
     fUpperPos=b->getPos()+b->getLen();
     iter++;
+  }
+
+  // Check for GameOver
+  if(!someBlockMovement && fUpperPos >= maxSize){
+    Serial.println("GAMEOVER");
+    state = GameState::GameOver;
   }
   
   /*ToDo: Move out of here, put to game loop, make level-dependent*/
@@ -55,6 +68,20 @@ size_t stack::getBlockLengthSum() const {
         retSize+=(*cit)->getLen();
     }
   return retSize;
+}
+
+void stack::reset(){
+  //Del all Block from List
+  auto iter = blocks.begin();
+  auto end  = blocks.end();
+  while (iter != end)
+  {
+    auto b=*iter;
+    iter=blocks.erase(iter);
+    delete b;
+    iter++;
+  }
+  state = GameState::Running; //TODO use Idel
 }
 
 void stack::checkForAction(BlockType typeIn) {
