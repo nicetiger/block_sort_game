@@ -1,5 +1,6 @@
 #include <FastLED.h>
 #include <list>
+#include <algorithm>
 
 // Set our LED Pin to the GPIO Pin
 const int ledPin = 2;
@@ -20,6 +21,11 @@ void setup()
   Serial.begin(115200);
   Serial.println("Starting NimBLE Client");
   initGame();
+
+  // setup input 
+  pinMode(25, INPUT_PULLUP);
+  pinMode(26, INPUT_PULLUP);
+  pinMode(27, INPUT_PULLUP);
 }
 
 void initGame(){
@@ -44,7 +50,9 @@ block::block()
 {
   Serial.println("new block");
   pos=NUM_LEDS;
-  color=CHSV(random8(),255,255);
+  
+  uint8_t hue = (random8()/64)*64;
+  color=CHSV(hue,255,255);
   active=true;
   velocity=(rand()%8)/8.0+0.1;
   len=rand()%4+1;
@@ -52,16 +60,15 @@ block::block()
 
 void block::update() 
 {
-  Serial.println(pos); 
   if (!active) return;
   pos-=velocity;
-  if (pos<0)
+  if (pos+len < 0)
     active=false;
   else
   {
     //draw block
     bool first=true;
-    for (int p=pos;p<NUM_LEDS && p < pos+len;p++)
+    for (int p=std::max(0.0f,pos);p<NUM_LEDS && p < pos+len;p++)
     {
       if (first)
       {
@@ -102,6 +109,26 @@ void update(int tick)
   }
 }
 
+void checkTaster(){
+  CRGB inputColor;
+  // 0 when pressed
+  int taster1 = digitalRead(25); // RED
+  int taster2 = digitalRead(26); // GREEN
+  int taster3 = digitalRead(27); // BLUE
+
+  if(taster1 == 0){
+    inputColor += CRGB::Red;
+  }
+  if(taster2 == 0){
+    inputColor += CRGB::Green;
+  }
+  if(taster3 == 0){
+    inputColor += CRGB::Blue;
+  }
+
+  leds[0] = inputColor;
+}
+
 void loop()
 {
   int time=millis();
@@ -109,6 +136,7 @@ void loop()
   if (time % 50 == 0)
   {
     update(time/50);
+    checkTaster();
     FastLED.show();
   }
 }
