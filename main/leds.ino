@@ -12,6 +12,7 @@ const int ledPin = 2;
 
 // Define the array of leds
 CRGB leds[NUM_LEDS];
+int TOS = 1;
 
 void setup()
 {
@@ -40,19 +41,47 @@ class block
   int len;
   float velocity;
   CRGB color;
+  int type;
   public:
     bool active;
     block();
     void update();  
+    int getType(){return type;}
+    int getLen(){return len;}
 };
+
+CRGB typeToColor(int type)
+{
+  CRGB color = CRGB::Black;
+  switch (type)
+  {
+    case(-1):
+    color = CRGB::Black;
+  case (0):
+    color = CRGB::Red;
+    break;
+  case (1):
+    color = CRGB::Green;
+    break;
+  case (2):
+    color = CRGB::Blue;
+    break;
+  case (3):
+    color = CRGB::Yellow;
+    break;
+  case (4):
+    color = CRGB::Magenta;
+    break;
+  }
+  return color;
+}
 
 block::block()
 {
-  Serial.println("new block");
+  type = int(random()%5);
   pos=NUM_LEDS;
-  
-  uint8_t hue = (random8()/64)*64;
-  color=CHSV(hue,255,255);
+
+  color=typeToColor(type);
   active=true;
   velocity=(rand()%8)/8.0+0.1;
   len=rand()%4+1;
@@ -60,24 +89,34 @@ block::block()
 
 void block::update() 
 {
-  if (!active) return;
-  pos-=velocity;
-  if (pos+len < 0)
-    active=false;
-  else
+  //Move Block down if not on bottom
+  if((pos-velocity) > TOS)
+    pos-=velocity;
+  else {
+   if (active)
+   {
+        pos=TOS;
+    velocity = 0;
+    TOS+=len;
+    active = false;
+  Serial.println(pos);
+  Serial.println(TOS);
+  Serial.println(active);
+  Serial.println("");
+
+   }
+  }
+  //draw block
+  bool first=true;
+  for (int p=std::max(1.0f,pos);p<NUM_LEDS && p <= pos+len;p++)
   {
-    //draw block
-    bool first=true;
-    for (int p=std::max(0.0f,pos);p<NUM_LEDS && p < pos+len;p++)
+    if (first)
     {
-      if (first)
-      {
-        first=false;
-        leds[p]+=color;
-      }
-      else
-        leds[p]+=color%64;
+      first=false;
+      leds[p]+=color;
     }
+    else
+      leds[p]+=color%64;
   }
 }
 
@@ -88,7 +127,7 @@ void update(int tick)
   for (int i=0;i<NUM_LEDS;i++) {
     leds[i]=CRGB::Black;
   }
-  if (blocks.size()<5)
+  if (blocks.size()<1)
   {
     auto b = new block();
     blocks.push_back(b);
@@ -100,17 +139,14 @@ void update(int tick)
   {
     auto b=*iter;
     b->update();
-    if (!b->active)
-    {
-      iter=blocks.erase(iter);
-      delete b;
-    }
+    
     iter++;
   }
 }
 
-void checkTaster(){
+int checkTaster(){
   CRGB inputColor;
+  int inputType = -1;
   // 0 when pressed
   int taster1 = digitalRead(25); // RED
   int taster2 = digitalRead(26); // GREEN
@@ -118,15 +154,69 @@ void checkTaster(){
 
   if(taster1 == 0){
     inputColor += CRGB::Red;
+    inputType += 1;
   }
   if(taster2 == 0){
-    inputColor += CRGB::Green;
+    inputColor += CRGB::Green; 
+    inputType += 2;
   }
   if(taster3 == 0){
     inputColor += CRGB::Blue;
+    inputType += 4;
+  }
+  inputColor = typeToColor(inputType);
+  leds[0] = inputColor;
+  return inputType;
+}
+
+void checkRemoveBlock(int input){
+  auto act_block = blocks.front();
+  int actType = act_block->getType();
+  if(actType == input){
+    TOS-=act_block->getLen();
+    if(TOS<0)
+      TOS=0;
+    blocks.remove(act_block);
+    delete act_block;
+  }
+}
+
+bool checkForGameOver(){
+  if(TOS >= NUM_LEDS)
+  {
+    return(true);
+  }
+  return(false);
+}
+
+void resetGame(){
+  TOS=1;
+    
+  //Del all Block from List
+  auto iter = blocks.begin();
+  auto end  = blocks.end();
+  while (iter != end)
+  {
+    auto b=*iter;
+    iter=blocks.erase(iter);
+    delete b;
+    iter++;
+  }
+}
+
+void GameOverShow(int time)
+{ 
+  for (int i=0;i<NUM_LEDS;i++) {
+    leds[i]=CRGB::Red;
+  }
+  static int oldtime = 0;
+  if(oldtime == 0)
+    oldtime = time;
+  if(time-oldtime > 3000/50) {
+    resetGame();
+    oldtime = 0;
   }
 
-  leds[0] = inputColor;
 }
 
 void loop()
@@ -135,8 +225,15 @@ void loop()
 
   if (time % 50 == 0)
   {
-    update(time/50);
-    checkTaster();
+    if(checkForGameOver()){
+      GameOverShow(time/50);
+    }
+    else
+    {
+      update(time/50);
+      int input = checkTaster();
+      checkRemoveBlock(input);    
+    }
     FastLED.show();
   }
 }
