@@ -57,6 +57,24 @@ size_t stack::getBlockLengthSum() const {
   return retSize;
 }
 
+void stack::checkForAction(BlockType typeIn) {
+    if(blocks.size()) {
+      block* b=*(blocks.begin());
+      if(b->getPos()<1) {
+        /*there is a block, waiting to be triggerd*/
+        if(b->getType()==typeIn){
+          if(b->getLen()>1) {
+            b->setPos(b->getPos()+1.0);
+            b->setLen(b->getLen()-1);
+          } else {
+            blocks.pop_front();
+            delete b;
+          }
+        }
+      }
+    }
+}
+
 /*
 void checkRemoveBlock(int input){
   auto act_block = blocks.front();

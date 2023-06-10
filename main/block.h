@@ -11,6 +11,7 @@ enum BlockType
     ColorBlue=3,
     ColorYellow=4,
     ColorMagenta=5,
+    ColorTurquoise=6,
     
     /*keepAtEnd*/BLOCKTYPE_MAX
 };
@@ -29,6 +30,7 @@ class block
 
     BlockType getType() const {return type;}
     size_t getLen() const {return len;}
+    void setLen(size_t lenNew) {len=lenNew;}
     void setPos(float fNew) {this->pos=fNew;}
     float getPos() const {return pos;}
     float getVelocity() const {return velocity;}

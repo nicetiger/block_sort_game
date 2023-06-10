@@ -29,6 +29,10 @@ CRGB block::typeToColor(BlockType type)
   case (ColorMagenta):
     color = CRGB::Magenta;
     break;
+  case (ColorTurquoise):
+    color = CRGB::DarkTurquoise;
+    break;
+    
   default:
     color = 0x040404; /*something's wrong!*/
   }

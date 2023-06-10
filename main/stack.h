@@ -12,6 +12,7 @@ class stack
         void calcStep();
         void renderTo(CRGB* leds, size_t size);
         size_t getBlockLengthSum() const;
+        void checkForAction(BlockType typeIn);
     protected:
         std::list<block*> blocks;
     private:

@@ -3,7 +3,7 @@
 
 #include "stack.h"
 #include "block.h"
-
+#include "button.h"
 
 // Set our LED Pin to the GPIO Pin
 const int ledPin = 2;
@@ -16,8 +16,7 @@ const int ledPin = 2;
 // Define the array of leds
 CRGB leds[NUM_LEDS];
 
-stack s(NUM_LEDS-1);
-
+stack s(NUM_LEDS-3);
 
 void setup()
 {
@@ -40,6 +39,8 @@ void initGame()
   FastLED.show();
   usleep(3000);
   leds[0] = CRGB::Red;
+  leds[0] = CRGB::Green;
+  leds[0] = CRGB::Blue;
   FastLED.show();
 }
 
@@ -49,33 +50,44 @@ void update(int tick)
     leds[i]=CRGB::Black;
   }
   s.calcStep();
-  s.renderTo(leds+1,NUM_LEDS-1);
+  s.renderTo(leds+3,NUM_LEDS-3);
   
   
 }
-/*
-int checkTaster(){
+
+BlockType checkTaster(){
   CRGB inputColor;
-  int inputType = 0;
   // 0 when pressed
   int taster1 = digitalRead(25); // RED
   int taster2 = digitalRead(26); // GREEN
   int taster3 = digitalRead(27); // BLUE
-
+ 
+  BlockType type=Random;   
   if(taster1 == 0){
-    inputType += 1;
+      type=ColorRed;
   }
   if(taster2 == 0){
-    inputType += 2;
+    if(type==ColorRed) {
+        type=ColorYellow;
+      } else {
+        type=ColorGreen;
+      }
   }
   if(taster3 == 0){
-    inputType += 4;
+    if(type==ColorRed) {
+      type=ColorMagenta;
+    } else if (type == ColorGreen) {
+      type=ColorTurquoise;
+    } else if (type == Random) {
+      type=ColorBlue;
+    } else {
+      type=Random;
+    }
   }
-  inputColor = typeToColor(inputType);
+  inputColor = block::typeToColor(type);
   leds[0] = inputColor;
-  return inputType;
+  return type;
 }
-*/
 
 
 /*bool checkForGameOver(){
@@ -127,8 +139,8 @@ void loop()
     else
     {*/
       update(time/50);
- //     int input = checkTaster();
- //     checkRemoveBlock(input);    
+      BlockType typeButton = checkTaster();
+      s.checkForAction(typeButton);    
     /*}*/
     FastLED.show();
   }
